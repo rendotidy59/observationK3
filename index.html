@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Safety Observation & Hazard Report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --bg: #0f172a;
+      --card: #111827;
+      --border: #1f2937;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #dc2626;
+      --success: #16a34a;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top, #1f2937, #020617);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 960px;
+      padding: 24px 16px 40px;
+    }
+
+    .app-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 0 0 8px;
+    }
+
+    .subtitle {
+      margin: 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.94);
+      border-radius: 18px;
+      padding: 18px 18px 20px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(16px);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-radius: 999px;
+      padding: 4px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+    }
+
+    .tab-btn {
+      flex: 1;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 10px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.18s;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.5);
+    }
+
+    .tab-btn span.icon {
+      font-size: 16px;
+    }
+
+    .form-section {
+      display: none;
+    }
+
+    .form-section.active {
+      display: block;
+      animation: fadeIn 0.18s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 16px;
+    }
+
+    @media (max-width: 720px) {
+      form {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .required {
+      color: var(--danger);
+      margin-left: 3px;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="time"],
+    select,
+    textarea {
+      border-radius: 10px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      padding: 7px 9px;
+      font-size: 14px;
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--text);
+      outline: none;
+      width: 100%;
+    }
+
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #4b5563;
+      font-size: 13px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.6);
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+      grid-column: 1 / -1;
+    }
+
+    .btn {
+      border-radius: 999px;
+      padding: 8px 16px;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.16s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      box-shadow: 0 10px 18px rgba(37, 99, 235, 0.6);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 26px rgba(37, 99, 235, 0.7);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(31, 41, 55, 0.9);
+      color: var(--text);
+    }
+
+    .status-text {
+      font-size: 12px;
+    }
+
+    .status-text.success {
+      color: var(--success);
+    }
+
+    .status-text.error {
+      color: var(--danger);
+    }
+
+    .footer {
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .footer span {
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        <span>Safety Web Form &bull; GitHub Pages + Google Sheets</span>
+      </div>
+      <h1>Observasi Kerja &amp; Hazard Report</h1>
+      <p class="subtitle">
+        Catat observasi perilaku & kondisi tidak aman secara cepat. Data otomatis tersimpan ke Google Sheets.
+      </p>
+    </header>
+
+    <main class="card">
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" data-target="tab-observation">
+          <span class="icon">👀</span>
+          <span>Observasi Kerja</span>
+        </button>
+        <button class="tab-btn" data-target="tab-hazard">
+          <span class="icon">⚠️</span>
+          <span>Hazard Report</span>
+        </button>
+      </div>
+
+      <!-- Observasi Kerja -->
+      <section id="tab-observation" class="form-section active">
+        <form id="form-observation" data-type="observation">
+          <div class="form-group">
+            <label>Tanggal Observasi <span class="required">*</span></label>
+            <input type="date" name="tanggal" required />
+          </div>
+
+          <div class="form-group">
+            <label>Waktu Observasi</label>
+            <input type="time" name="waktu" />
+          </div>
+
+          <div class="form-group">
+            <label>Nama Observer <span class="required">*</span></label>
+            <input type="text" name="nama_observer" placeholder="Nama lengkap" required />
+          </div>
+
+          <div class="form-group">
+            <label>Unit / Departemen</label>
+            <input type="text" name="departemen" placeholder="Misal: Production, Maintenance" />
+          </div>
+
+          <div class="form-group">
+            <label>Lokasi Kerja / Area <span class="required">*</span></label>
+            <input type="text" name="lokasi" placeholder="Misal: Packing Plant, Quarry, Workshop" required />
+          </div>
+
+          <div class="form-group">
+            <label>Jenis Observasi <span class="required">*</span></label>
+            <select name="jenis_observasi" required>
+              <option value="">-- Pilih --</option>
+              <option value="Safe Act">Safe Act (Perilaku Aman)</option>
+              <option value="Unsafe Act">Unsafe Act (Perilaku Tidak Aman)</option>
+              <option value="Safe Condition">Safe Condition (Kondisi Aman)</option>
+              <option value="Unsafe Condition">Unsafe Condition (Kondisi Tidak Aman)</option>
+            </select>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Deskripsi Observasi <span class="required">*</span></label>
+            <textarea name="deskripsi" placeholder="Tuliskan apa yang diamati secara singkat & jelas" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Risiko Potensial</label>
+            <select name="risiko_potensial">
+              <option value="">-- Pilih --</option>
+              <option value="Rendah">Rendah</option>
+              <option value="Sedang">Sedang</option>
+              <option value="Tinggi">Tinggi</option>
+            </select>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Tindakan Perbaikan / Pujian</label>
+            <textarea
+              name="tindakan"
+              placeholder="Apa tindakan yang langsung dilakukan atau rekomendasi perbaikan / apresiasi"
+            ></textarea>
+            <div class="hint">
+              Contoh: Memberi arahan penggunaan APD yang benar, melaporkan kondisi tidak aman, memberi apresiasi pada pekerja yang patuh.
+            </div>
+          </div>
+
+          <div class="actions">
+            <span class="status-text" id="status-observation"></span>
+            <button type="button" class="btn btn-ghost" id="btn-reset-observation">Reset</button>
+            <button type="submit" class="btn btn-primary">
+              <span>Submit Observasi</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Hazard Report -->
+      <section id="tab-hazard" class="form-section">
+        <form id="form-hazard" data-type="hazard">
+          <div class="form-group">
+            <label>Tanggal Temuan <span class="required">*</span></label>
+            <input type="date" name="tanggal" required />
+          </div>
+
+          <div class="form-group">
+            <label>Nama Pelapor <span class="required">*</span></label>
+            <input type="text" name="nama_pelapor" placeholder="Nama lengkap" required />
+          </div>
+
+          <div class="form-group">
+            <label>Lokasi / Area <span class="required">*</span></label>
+            <input type="text" name="lokasi" placeholder="Misal: Line 1, Office, Warehouse" required />
+          </div>
+
+          <div class="form-group">
+            <label>Jenis Hazard <span class="required">*</span></label>
+            <select name="jenis_hazard" required>
+              <option value="">-- Pilih --</option>
+              <option value="Fisik">Fisik</option>
+              <option value="Kimia">Kimia</option>
+              <option value="Biologi">Biologi</option>
+              <option value="Ergonomi">Ergonomi</option>
+              <option value="Psikososial">Psikososial</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Deskripsi Bahaya <span class="required">*</span></label>
+            <textarea
+              name="deskripsi"
+              placeholder="Jelaskan kondisi bahaya yang ditemukan (siapa, apa, di mana)"
+              required
+            ></textarea>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Potensi Akibat</label>
+            <textarea
+              name="potensi_akibat"
+              placeholder="Apa potensi cedera/kerugian bila bahaya ini tidak ditindaklanjuti?"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Tindakan Sementara yang Sudah Diambil</label>
+            <textarea
+              name="tindakan_sementara"
+              placeholder="Misal: dipasang barrier sementara, diberi signage, menghentikan pekerjaan, dll"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Butuh Tindak Lanjut? <span class="required">*</span></label>
+            <select name="butuh_tindak_lanjut" required>
+              <option value="">-- Pilih --</option>
+              <option value="Ya">Ya</option>
+              <option value="Tidak">Tidak</option>
+            </select>
+          </div>
+
+          <div class="actions">
+            <span class="status-text" id="status-hazard"></span>
+            <button type="button" class="btn btn-ghost" id="btn-reset-hazard">Reset</button>
+            <button type="submit" class="btn btn-primary">
+              <span>Submit Hazard</span>
+            </button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>
+        Data tersimpan di Google Sheets melalui Apps Script (POST API). Frontend statis di GitHub Pages.
+      </span>
+    </footer>
+  </div>
+
+  <script>
+    // ======= KONFIGURASI: GANTI DENGAN URL APPS SCRIPT WEB APP KAMU =======
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8nUt69oU5s4IUFQMm-RkqyFb2IHdXvPMvX3APd5JynPUW5-9YfVO-PuNe11JlZpmv0w/exec";
+    // ======================================================================
+
+    // Set default tanggal = hari ini
+    function setTodayDefault() {
+      const today = new Date().toISOString().split("T")[0];
+      document
+        .querySelectorAll('input[type="date"]')
+        .forEach((input) => (input.value = today));
+    }
+    setTodayDefault();
+
+    // Tab handler
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const sections = document.querySelectorAll(".form-section");
+
+    tabButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.dataset.target;
+
+        tabButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        sections.forEach((sec) => {
+          sec.classList.toggle("active", sec.id === targetId);
+        });
+      });
+    });
+
+    // Helper: submit form
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+
+      const form = e.target;
+      const formType = form.dataset.type; // "observation" atau "hazard"
+      const statusEl =
+        formType === "observation"
+          ? document.getElementById("status-observation")
+          : document.getElementById("status-hazard");
+
+      statusEl.textContent = "Mengirim data...";
+      statusEl.className = "status-text";
+
+      const formData = new FormData(form);
+      formData.append("formType", formType);
+
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Response tidak OK");
+        }
+
+        // Opsional: bisa baca response JSON / text di sini
+        statusEl.textContent = "Berhasil terkirim. Terima kasih atas laporannya.";
+        statusEl.className = "status-text success";
+
+        form.reset();
+        setTodayDefault();
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent =
+          "Gagal mengirim. Cek koneksi atau hubungi admin (Apps Script URL).";
+        statusEl.className = "status-text error";
+      }
+    }
+
+    document
+      .getElementById("form-observation")
+      .addEventListener("submit", handleFormSubmit);
+    document
+      .getElementById("form-hazard")
+      .addEventListener("submit", handleFormSubmit);
+
+    // Reset button
+    document
+      .getElementById("btn-reset-observation")
+      .addEventListener("click", () => {
+        const form = document.getElementById("form-observation");
+        form.reset();
+        setTodayDefault();
+        document.getElementById("status-observation").textContent = "";
+      });
+
+    document
+      .getElementById("btn-reset-hazard")
+      .addEventListener("click", () => {
+        const form = document.getElementById("form-hazard");
+        form.reset();
+        setTodayDefault();
+        document.getElementById("status-hazard").textContent = "";
+      });
+  </script>
+</body>
+</html>
