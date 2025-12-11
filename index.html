@@ -183,11 +183,6 @@
       width: 100%;
     }
 
-    input[type="file"] {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
     textarea {
       min-height: 70px;
       resize: vertical;
@@ -213,6 +208,22 @@
     .hint {
       font-size: 11px;
       color: var(--muted);
+    }
+
+    .file-input {
+      border-radius: 10px;
+      border: 1px dashed rgba(75, 85, 99, 0.9);
+      padding: 7px 9px;
+      background: rgba(15, 23, 42, 0.9);
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .file-name {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
     }
 
     .actions {
@@ -281,15 +292,6 @@
     .footer span {
       opacity: 0.7;
     }
-
-    .preview-img {
-      margin-top: 4px;
-      max-width: 200px;
-      max-height: 200px;
-      border-radius: 10px;
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      display: none;
-    }
   </style>
 </head>
 <body>
@@ -297,11 +299,11 @@
     <header class="app-header">
       <div class="badge">
         <span class="badge-dot"></span>
-        <span>Safety Web Form • GitHub Pages + Google Sheets</span>
+        <span>Safety Web Form &bull; GitHub Pages + Google Sheets + Foto</span>
       </div>
       <h1>Observasi Kerja &amp; Hazard Report</h1>
       <p class="subtitle">
-        Catat observasi perilaku & kondisi tidak aman secara cepat. Data otomatis tersimpan ke Google Sheets & foto hazard ke Google Drive.
+        Catat observasi perilaku & kondisi tidak aman secara cepat. Data & foto otomatis tersimpan ke Google Sheets/Drive.
       </p>
     </header>
 
@@ -320,7 +322,7 @@
 
       <!-- Observasi Kerja -->
       <section id="tab-observation" class="form-section active">
-        <form id="form-observation" data-type="observation">
+        <form id="form-observation" data-type="observation" enctype="multipart/form-data">
           <div class="form-group">
             <label>Tanggal Observasi <span class="required">*</span></label>
             <input type="date" name="tanggal" required />
@@ -383,6 +385,18 @@
             </div>
           </div>
 
+          <div class="form-group full-width">
+            <label>Foto Observasi (opsional)</label>
+            <label class="file-input">
+              <input type="file" name="foto" accept="image/*" capture="environment" style="display:none" />
+              📷 Pilih / ambil foto observasi
+            </label>
+            <div class="file-name" id="file-name-observation"></div>
+            <div class="hint">
+              Maksimal ukuran file mengikuti batas Google Apps Script (~50 MB). Disarankan 1–3 foto saja.
+            </div>
+          </div>
+
           <div class="actions">
             <span class="status-text" id="status-observation"></span>
             <button type="button" class="btn btn-ghost" id="btn-reset-observation">Reset</button>
@@ -415,7 +429,10 @@
             <label>Jenis Hazard <span class="required">*</span></label>
             <select name="jenis_hazard" required>
               <option value="">-- Pilih --</option>
-              <option value="Fisik">Fisik</option>
+              <option value="Kendaraan">Kendaraan</option>
+              <option value="LOTOTO">LOTOTO</option>
+              <option value="Kelistrikan">Kelistrikan</option>
+              <option value="KerjaKetinggian">KerjaKetinggian</option>
               <option value="Kimia">Kimia</option>
               <option value="Biologi">Biologi</option>
               <option value="Ergonomi">Ergonomi</option>
@@ -459,12 +476,15 @@
           </div>
 
           <div class="form-group full-width">
-            <label>Upload Foto Hazard (opsional)</label>
-            <input type="file" name="foto" id="foto" accept="image/*" />
+            <label>Foto Hazard (opsional)</label>
+            <label class="file-input">
+              <input type="file" name="foto" accept="image/*" capture="environment" style="display:none" />
+              📷 Pilih / ambil foto hazard
+            </label>
+            <div class="file-name" id="file-name-hazard"></div>
             <div class="hint">
-              Gunakan untuk mendokumentasikan kondisi bahaya (maks. 1 file per laporan).
+              Foto membantu tim memahami level risiko dan penentuan tindakan perbaikan.
             </div>
-            <img id="preview-foto" class="preview-img" alt="Preview Foto Hazard" />
           </div>
 
           <div class="actions">
@@ -480,7 +500,7 @@
 
     <footer class="footer">
       <span>
-        Data observasi & hazard tersimpan di Google Sheets. Foto hazard tersimpan di Google Drive melalui Apps Script.
+        Data teks tersimpan di Google Sheets, foto tersimpan di Google Drive melalui Apps Script Web App.
       </span>
     </footer>
   </div>
@@ -516,27 +536,6 @@
       });
     });
 
-    // Preview foto hazard
-    const fotoInput = document.getElementById("foto");
-    const previewImg = document.getElementById("preview-foto");
-
-    if (fotoInput && previewImg) {
-      fotoInput.addEventListener("change", () => {
-        const file = fotoInput.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            previewImg.src = e.target.result;
-            previewImg.style.display = "block";
-          };
-          reader.readAsDataURL(file);
-        } else {
-          previewImg.src = "";
-          previewImg.style.display = "none";
-        }
-      });
-    }
-
     // Helper: submit form
     async function handleFormSubmit(e) {
       e.preventDefault();
@@ -561,7 +560,8 @@
         });
 
         const text = await response.text();
-        console.log("Status:", response.status, "Response:", text);
+        console.log("Status:", response.status);
+        console.log("Response body:", text);
 
         if (!response.ok) {
           throw new Error("Response tidak OK: " + response.status);
@@ -572,9 +572,10 @@
 
         form.reset();
         setTodayDefault();
-        if (formType === "hazard" && previewImg) {
-          previewImg.src = "";
-          previewImg.style.display = "none";
+        if (formType === "observation") {
+          document.getElementById("file-name-observation").textContent = "";
+        } else {
+          document.getElementById("file-name-hazard").textContent = "";
         }
       } catch (err) {
         console.error(err);
@@ -599,6 +600,7 @@
         form.reset();
         setTodayDefault();
         document.getElementById("status-observation").textContent = "";
+        document.getElementById("file-name-observation").textContent = "";
       });
 
     document
@@ -608,11 +610,32 @@
         form.reset();
         setTodayDefault();
         document.getElementById("status-hazard").textContent = "";
-        if (previewImg) {
-          previewImg.src = "";
-          previewImg.style.display = "none";
+        document.getElementById("file-name-hazard").textContent = "";
+      });
+
+    // File input handlers (biar bisa klik area "📷 ..." & nampilin nama file)
+    function setupFileInput(sectionId, fileNameId) {
+      const section = document.getElementById(sectionId);
+      const label = section.querySelector(".file-input");
+      const input = label.querySelector('input[type="file"]');
+      const fileNameEl = document.getElementById(fileNameId);
+
+      label.addEventListener("click", () => {
+        input.click();
+      });
+
+      input.addEventListener("change", () => {
+        if (input.files && input.files[0]) {
+          fileNameEl.textContent = "Dipilih: " + input.files[0].name;
+        } else {
+          fileNameEl.textContent = "";
         }
       });
+    }
+
+    setupFileInput("tab-observation", "file-name-observation");
+    setupFileInput("tab-hazard", "file-name-hazard");
   </script>
 </body>
 </html>
+
