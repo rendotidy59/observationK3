@@ -183,6 +183,11 @@
       width: 100%;
     }
 
+    input[type="file"] {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
     textarea {
       min-height: 70px;
       resize: vertical;
@@ -276,6 +281,15 @@
     .footer span {
       opacity: 0.7;
     }
+
+    .preview-img {
+      margin-top: 4px;
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 10px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -283,11 +297,11 @@
     <header class="app-header">
       <div class="badge">
         <span class="badge-dot"></span>
-        <span>Safety Web Form &bull; GitHub Pages + Google Sheets</span>
+        <span>Safety Web Form • GitHub Pages + Google Sheets</span>
       </div>
       <h1>Observasi Kerja &amp; Hazard Report</h1>
       <p class="subtitle">
-        Catat observasi perilaku & kondisi tidak aman secara cepat. Data otomatis tersimpan ke Google Sheets.
+        Catat observasi perilaku & kondisi tidak aman secara cepat. Data otomatis tersimpan ke Google Sheets & foto hazard ke Google Drive.
       </p>
     </header>
 
@@ -381,7 +395,7 @@
 
       <!-- Hazard Report -->
       <section id="tab-hazard" class="form-section">
-        <form id="form-hazard" data-type="hazard">
+        <form id="form-hazard" data-type="hazard" enctype="multipart/form-data">
           <div class="form-group">
             <label>Tanggal Temuan <span class="required">*</span></label>
             <input type="date" name="tanggal" required />
@@ -444,6 +458,15 @@
             </select>
           </div>
 
+          <div class="form-group full-width">
+            <label>Upload Foto Hazard (opsional)</label>
+            <input type="file" name="foto" id="foto" accept="image/*" />
+            <div class="hint">
+              Gunakan untuk mendokumentasikan kondisi bahaya (maks. 1 file per laporan).
+            </div>
+            <img id="preview-foto" class="preview-img" alt="Preview Foto Hazard" />
+          </div>
+
           <div class="actions">
             <span class="status-text" id="status-hazard"></span>
             <button type="button" class="btn btn-ghost" id="btn-reset-hazard">Reset</button>
@@ -457,14 +480,14 @@
 
     <footer class="footer">
       <span>
-        Data tersimpan di Google Sheets melalui Apps Script (POST API). Frontend statis di GitHub Pages.
+        Data observasi & hazard tersimpan di Google Sheets. Foto hazard tersimpan di Google Drive melalui Apps Script.
       </span>
     </footer>
   </div>
 
   <script>
     // ======= KONFIGURASI: GANTI DENGAN URL APPS SCRIPT WEB APP KAMU =======
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8nUt69oU5s4IUFQMm-RkqyFb2IHdXvPMvX3APd5JynPUW5-9YfVO-PuNe11JlZpmv0w/exec";
+    const SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_URL_HERE";
     // ======================================================================
 
     // Set default tanggal = hari ini
@@ -493,6 +516,27 @@
       });
     });
 
+    // Preview foto hazard
+    const fotoInput = document.getElementById("foto");
+    const previewImg = document.getElementById("preview-foto");
+
+    if (fotoInput && previewImg) {
+      fotoInput.addEventListener("change", () => {
+        const file = fotoInput.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            previewImg.src = e.target.result;
+            previewImg.style.display = "block";
+          };
+          reader.readAsDataURL(file);
+        } else {
+          previewImg.src = "";
+          previewImg.style.display = "none";
+        }
+      });
+    }
+
     // Helper: submit form
     async function handleFormSubmit(e) {
       e.preventDefault();
@@ -516,16 +560,22 @@
           body: formData,
         });
 
+        const text = await response.text();
+        console.log("Status:", response.status, "Response:", text);
+
         if (!response.ok) {
-          throw new Error("Response tidak OK");
+          throw new Error("Response tidak OK: " + response.status);
         }
 
-        // Opsional: bisa baca response JSON / text di sini
         statusEl.textContent = "Berhasil terkirim. Terima kasih atas laporannya.";
         statusEl.className = "status-text success";
 
         form.reset();
         setTodayDefault();
+        if (formType === "hazard" && previewImg) {
+          previewImg.src = "";
+          previewImg.style.display = "none";
+        }
       } catch (err) {
         console.error(err);
         statusEl.textContent =
@@ -558,8 +608,11 @@
         form.reset();
         setTodayDefault();
         document.getElementById("status-hazard").textContent = "";
+        if (previewImg) {
+          previewImg.src = "";
+          previewImg.style.display = "none";
+        }
       });
   </script>
 </body>
 </html>
-
