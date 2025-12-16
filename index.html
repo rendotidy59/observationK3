@@ -614,15 +614,10 @@
       });
 
     // File input handlers (biar bisa klik area "📷 ..." & nampilin nama file)
-    function setupFileInput(sectionId, fileNameId) {
-      const section = document.getElementById(sectionId);
-      const label = section.querySelector(".file-input");
-      const input = label.querySelector('input[type="file"]');
-      const fileNameEl = document.getElementById(fileNameId);
-
-      label.addEventListener("click", () => {
-        input.click();
-      });
+  function setupFileInput(sectionId, fileNameId) {
+    const section = document.getElementById(sectionId);
+    const input = section.querySelector('.file-input input[type="file"]');
+    const fileNameEl = document.getElementById(fileNameId);
 
       input.addEventListener("change", () => {
         if (input.files && input.files[0]) {
@@ -638,6 +633,7 @@
   </script>
 </body>
 </html>
+
 
 
 
